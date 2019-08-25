@@ -1,6 +1,6 @@
 # classroom_flutter
 
-A new Flutter application.
+A basic flutter application for Shared folder like environment using AWS services.
 
 ## Getting Started
 
