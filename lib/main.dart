@@ -25,19 +25,26 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   List data;
+  File galleryFile;
 
   Future getData() async {
 //    String url =
 //        'https://5cldfzpz5a.execute-api.ap-south-1.amazonaws.com/dev/getAllFiles';
-    const _awsUserPoolId = 'ap-south-1_ezMWp6Hdq';
-    const _awsClientId = '5aedttsefv2td8opmr4l9smgem';
+//    const _awsUserPoolId = 'ap-south-1_ezMWp6Hdq';
+//    const _awsClientId = '5aedttsefv2td8opmr4l9smgem';
 
-    const _identityPoolId = 'ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737';
+//    final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
+    const _awsUserPoolId = 'ap-south-1_gV1VxnlpG';
+    const _awsClientId = '72td7m5javu89hek30d77n0d4b';
     final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
 
-    final _cognitoUser = CognitoUser('harshil', _userPool);
+    final _cognitoUser = CognitoUser('yash', _userPool);
+
     final authDetails =
-        AuthenticationDetails(username: 'harshil', password: 'Mypass@12');
+        AuthenticationDetails(username: 'yash', password: 'Mypassword@12');
+
+    final cognitoUser = new CognitoUser(
+        'yash', _userPool);
 
     CognitoUserSession _session;
     try {
@@ -46,6 +53,8 @@ class HomePageState extends State<HomePage> {
       print(e);
     }
 
+    final _identityPoolId = 'ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737';
+
     final _credentials = CognitoCredentials(_identityPoolId, _userPool);
     await _credentials.getAwsCredentials(_session.getIdToken().getJwtToken());
 
@@ -53,7 +62,7 @@ class HomePageState extends State<HomePage> {
     final region = 'ap-south-1';
     final service = 's3';
     final key =
-        'https://s3bucketclass.s3.ap-south-1.amazonaws.com/VID20190630131423mp4';
+        'https://s3bucketclass.s3.ap-south-1.amazonaws.com/VID20190630131423mp4.mp4';
     final payload = SigV4.hashCanonicalRequest('');
     final datetime = SigV4.generateDatetime();
     final canonicalRequest = '''GET
@@ -114,8 +123,6 @@ class HomePageState extends State<HomePage> {
     print(uploadedImageUrl);
   }
 
-  //save the result of gallery file
-  File galleryFile;
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +137,8 @@ class HomePageState extends State<HomePage> {
 
       setState(() {});
     }
+
+
 
     fileSelector() async {
       Map<String, String> filesPaths;
@@ -158,7 +167,8 @@ class HomePageState extends State<HomePage> {
       body: new Builder(
         builder: (BuildContext context) {
           return new Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               new RaisedButton(
                 child: new Text('Select file'),
@@ -168,6 +178,7 @@ class HomePageState extends State<HomePage> {
                 child: new Text('Get all files'),
                 onPressed: getData,
               ),
+
             ],
           );
         },
