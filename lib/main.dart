@@ -92,17 +92,17 @@ class HomePageState extends State<HomePage> {
   List data;
   File galleryFile;
 
-  Future yashcognitotest() async {
+  final _awsUserPoolId = 'us-east-1_jNiKQfHo5';
+  final _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
+  final username = "yash.sodha@gmail.com";
+  final password = "Password@1234";
+  final _region = 'us-east-1';
+  final _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
 
-    const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-    const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
-    var username = "yash.sodha@gmail.com";
-    var password = "Password@1234";
-
+  Future<CognitoCredentials> getCredentials() async{
     final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
     final cognitoUser = new CognitoUser(username, userPool);
     final authDetails = new AuthenticationDetails(username: username, password: password);
-
     CognitoUserSession session;
     try
     {
@@ -115,16 +115,19 @@ class HomePageState extends State<HomePage> {
 
     print(session.getAccessToken().getJwtToken());
 
-    final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
-
+    var credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
     await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
+
+    return credentials;
+
+  }
+  
+  Future yashcognitotest() async {
+    var credentials = await getCredentials();
     print("Access key id: "+ credentials.accessKeyId);
     print("Secret Access Key: "+ credentials.secretAccessKey);
     print("Session Token: "+ credentials.sessionToken);
-
-    //return credentials;
   }
-
 
   Future getData() async {
 //    String url =
@@ -133,7 +136,6 @@ class HomePageState extends State<HomePage> {
 //    const _awsClientId = '5aedttsefv2td8opmr4l9smgem';
 
 //    final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
-
 
     const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
     const _awsClientId = '236066jreri4vs2b9k068kvcf0';
@@ -214,37 +216,14 @@ class HomePageState extends State<HomePage> {
     print('complete!');
   }
 
-  Future uploadS3Yash(String pathString) async {
+  Future fileList() async {
+    CognitoCredentials credentials = await getCredentials();
 
-    const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-    const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
-    var username = "yash.sodha@gmail.com";
-    var password = "Password@1234";
-
-    final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
-    final cognitoUser = new CognitoUser(username, userPool);
-    final authDetails = new AuthenticationDetails(username: username, password: password);
-
-    CognitoUserSession session;
-    try
-    {
-      session = await cognitoUser.authenticateUser(authDetails);
-    }
-    catch (e)
-    {
-      print(e);
-    }
-
-    print(session.getAccessToken().getJwtToken());
-
-    final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
-
-    await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
 
     const _region = 'us-east-1';
     const _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
 
-    final file = File(pathString);
+    final file = File("");
     String filename = basename(file.path);
 
     final stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
@@ -277,8 +256,8 @@ class HomePageState extends State<HomePage> {
     req.fields['X-Amz-Signature'] = signature;
     req.fields['x-amz-security-token'] = credentials.sessionToken;
 
-      print(req);
-      print(req.fields);
+    print(req);
+    print(req.fields);
 
     try {
       final res = await req.send();
@@ -291,17 +270,71 @@ class HomePageState extends State<HomePage> {
 
   }
 
+  Future uploadFileToS3(String pathString) async {
 
-  Future uploadToS3(String pathString) async {
-    String uploadedImageUrl = await FlutterAmazonS3.uploadImage(
-        pathString,
-        "s3bucketclass",
-        "ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737",
-        "ap-south-1");
+    var credentials = await getCredentials();
 
-    print(uploadedImageUrl);
+    final file = File(pathString);
+    String filename = basename(file.path);
+
+    final stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
+    final length = await file.length();
+    print("File length: " + length.toString());
+    final uri = Uri.parse(_s3Endpoint);
+    final req = http.MultipartRequest("POST", uri);
+    final multipartFile = http.MultipartFile('file', stream, length,
+        filename: path.basename(file.path));
+
+    final policy = Policy.fromS3PresignedPost(
+        filename,
+        'yashrstest123',
+        15,
+        credentials.accessKeyId,
+        length,
+        credentials.sessionToken,
+        region: _region);
+
+    final key = SigV4.calculateSigningKey(credentials.secretAccessKey, policy.datetime, _region, 's3');
+    final signature = SigV4.calculateSignature(key, policy.encode());
+
+    req.files.add(multipartFile);
+    req.fields['key'] = policy.key;
+    req.fields['acl'] = 'private';
+    req.fields['X-Amz-Credential'] = policy.credential;
+    req.fields['X-Amz-Algorithm'] = 'AWS4-HMAC-SHA256';
+    req.fields['X-Amz-Date'] = policy.datetime;
+    req.fields['Policy'] = policy.encode();
+    req.fields['X-Amz-Signature'] = signature;
+    req.fields['x-amz-security-token'] = credentials.sessionToken;
+
+    print(req);
+    print(req.fields);
+
+    try {
+      print("Sending Request");
+      final res = await req.send();
+      print("Request sent");
+      await for (var value in res.stream.transform(utf8.decoder)) {
+        print(value);
+
+      }
+    }
+    catch (e)
+    {
+      print("Exception: ");
+      print(e);
+    }
   }
 
+//  Future uploadToS3(String pathString) async {
+//    String uploadedImageUrl = await FlutterAmazonS3.uploadImage(
+//        pathString,
+//        "s3bucketclass",
+//        "ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737",
+//        "ap-south-1");
+//
+//    print(uploadedImageUrl);
+//  }
 
   @override
   Widget build(BuildContext context) {
@@ -317,8 +350,6 @@ class HomePageState extends State<HomePage> {
 //      setState(() {});
 //    }
 
-
-
     fileSelector() async {
       Map<String, String> filesPaths;
       filesPaths = await FilePicker
@@ -330,14 +361,8 @@ class HomePageState extends State<HomePage> {
       Iterable<String> allPaths = filesPaths.values; // List of all paths
 
       for (var path in allPaths) {
-//      print(value);
-        String someFilePath =
-            path; // Access a file path directly by its name (matching a key)
-        print("You selected File: " + someFilePath);
-        //uploadToS3(someFilePath.toString());
-
-        uploadS3Yash(someFilePath);
-
+        print("You selected File: " + path);
+        uploadFileToS3(path);
       }
       setState(() {});
     }
