@@ -7,11 +7,11 @@ import 'package:http/http.dart' as http;
 //import 'package:test/test.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_amazon_s3/flutter_amazon_s3.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:amazon_cognito_identity_dart/cognito.dart';
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:path/path.dart';
+import 'package:xml/xml.dart' as xml;
 
 
 class Policy {
@@ -180,16 +180,32 @@ $payload''';
     return response;
   }
 
-  Future getFileNames() async {
+  Future<List> getFileNames() async {
     http.Response aa = await getFileHelper("");
-    print(aa.body);
+    String xx = aa.body;
+    print(xx);
 
+    var document = xml.parse(xx);
+    print(document.children.length);
+
+    var files = document.findAllElements('Key');
+
+    List fileList = new List<String>();
+
+    for(int i=0; i< files.length; i++){
+      var file = files.elementAt(i);
+      print(file.text);
+      fileList.add(file.text);
+    }
+    print(fileList);
+    
+    return fileList;
   }
+
   Future getFile() async {
       http.Response aa = await getFileHelper("yash");
       print(aa.body);
   }
-
 
   Future uploadFileToS3(String pathString) async {
 
