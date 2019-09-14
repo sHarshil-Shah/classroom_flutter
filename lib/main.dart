@@ -11,6 +11,8 @@ import 'package:flutter_amazon_s3/flutter_amazon_s3.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:amazon_cognito_identity_dart/cognito.dart';
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
+import 'package:path/path.dart';
+
 
 class Policy {
   String expiration;
@@ -243,6 +245,7 @@ class HomePageState extends State<HomePage> {
     const _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
 
     final file = File(pathString);
+    String filename = basename(file.path);
 
     final stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
     final length = await file.length();
@@ -253,7 +256,7 @@ class HomePageState extends State<HomePage> {
         filename: path.basename(file.path));
 
     final policy = Policy.fromS3PresignedPost(
-        'test.jpg',
+        filename,
         'yashrstest123',
         15,
         credentials.accessKeyId,
