@@ -1,132 +1,89 @@
+import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:async/async.dart';
 import 'package:http/http.dart' as http;
-//import 'package:test/test.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter_amazon_s3/flutter_amazon_s3.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:amazon_cognito_identity_dart/cognito.dart';
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:path/path.dart';
 
-
-class Policy {
-  String expiration;
-  String region;
-  String bucket;
-  String key;
-  String credential;
-  String datetime;
-  String sessionToken;
-  int maxFileSize;
-
-  Policy(this.key, this.bucket, this.datetime, this.expiration, this.credential,
-      this.maxFileSize, this.sessionToken,
-      {this.region = 'us-east-1'});
-
-  factory Policy.fromS3PresignedPost(
-      String key,
-      String bucket,
-      int expiryMinutes,
-      String accessKeyId,
-      int maxFileSize,
-      String sessionToken, {
-        String region,
-      }) {
-    final datetime = SigV4.generateDatetime();
-    final expiration = (DateTime.now())
-        .add(Duration(minutes: expiryMinutes))
-        .toUtc()
-        .toString()
-        .split(' ')
-        .join('T');
-    final cred =
-        '$accessKeyId/${SigV4.buildCredentialScope(datetime, region, 's3')}';
-    final p = Policy(
-        key, bucket, datetime, expiration, cred, maxFileSize, sessionToken,
-        region: region);
-    return p;
-  }
-
-  String encode() {
-    final bytes = utf8.encode(toString());
-    return base64.encode(bytes);
-  }
-
-  @override
-  String toString() {
-    return '''
-{ "expiration": "${this.expiration}",
-  "conditions": [
-    {"bucket": "${this.bucket}"},
-    ["starts-with", "\$key", "${this.key}"],
-    {"acl": "private"},
-    ["content-length-range", 1, ${this.maxFileSize}],
-    {"x-amz-credential": "${this.credential}"},
-    {"x-amz-algorithm": "AWS4-HMAC-SHA256"},
-    {"x-amz-date": "${this.datetime}" },
-    {"x-amz-security-token": "${this.sessionToken}" }
-  ]
-}
-''';
-  }
-}
-
+import './policy.dart';
+import './login_page.dart';
 
 void main() {
   runApp(new MaterialApp(
-    home: new HomePage(),
+    home: new MyApp(),
   ));
 }
 
-class HomePage extends StatefulWidget {
+class MyApp extends StatelessWidget {
+
+  final routes = <String, WidgetBuilder>{
+    LoginPage.tag: (context) => LoginPage(),
+    HomePage.tag: (context) => HomePage(),
+  };
+
   @override
-  HomePageState createState() => new HomePageState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Share and Care',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.lightBlue,
+        fontFamily: 'Nunito',
+      ),
+      home: LoginPage(),
+      routes: routes,
+    );
+  }
 }
 
-class HomePageState extends State<HomePage> {
-  List data;
-  File galleryFile;
+class HomePage extends StatelessWidget {
+  static String tag = 'home-page';
 
-  Future yashcognitotest() async {
+  @override
+  Widget build(BuildContext context) {
+    List data;
+    File galleryFile;
 
-    const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-    const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
-    var username = "yash.sodha@gmail.com";
-    var password = "Password@1234";
+    Future yashcognitotest() async {
 
-    final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
-    final cognitoUser = new CognitoUser(username, userPool);
-    final authDetails = new AuthenticationDetails(username: username, password: password);
+      const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
+      const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
+      var username = "yash.sodha@gmail.com";
+      var password = "Password@1234";
 
-    CognitoUserSession session;
-    try
-    {
-      session = await cognitoUser.authenticateUser(authDetails);
+      final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
+      final cognitoUser = new CognitoUser(username, userPool);
+      final authDetails = new AuthenticationDetails(username: username, password: password);
+
+      CognitoUserSession session;
+      try
+      {
+        session = await cognitoUser.authenticateUser(authDetails);
+      }
+      catch (e)
+      {
+        print(e);
+      }
+
+      print(session.getAccessToken().getJwtToken());
+
+      final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
+
+      await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
+      print("Access key id: "+ credentials.accessKeyId);
+      print("Secret Access Key: "+ credentials.secretAccessKey);
+      print("Session Token: "+ credentials.sessionToken);
+
+      //return credentials;
     }
-    catch (e)
-    {
-      print(e);
-    }
 
-    print(session.getAccessToken().getJwtToken());
-
-    final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
-
-    await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
-    print("Access key id: "+ credentials.accessKeyId);
-    print("Secret Access Key: "+ credentials.secretAccessKey);
-    print("Session Token: "+ credentials.sessionToken);
-
-    //return credentials;
-  }
-
-
-  Future getData() async {
+    Future getData() async {
 //    String url =
 //        'https://5cldfzpz5a.execute-api.ap-south-1.amazonaws.com/dev/getAllFiles';
 //    const _awsUserPoolId = 'ap-south-1_ezMWp6Hdq';
@@ -135,38 +92,38 @@ class HomePageState extends State<HomePage> {
 //    final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
 
 
-    const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-    const _awsClientId = '236066jreri4vs2b9k068kvcf0';
-    final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
+      const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
+      const _awsClientId = '236066jreri4vs2b9k068kvcf0';
+      final _userPool = CognitoUserPool(_awsUserPoolId, _awsClientId);
 
-    final _cognitoUser = CognitoUser('yash', _userPool);
+      final _cognitoUser = CognitoUser('yash', _userPool);
 
-    final authDetails =
-        AuthenticationDetails(username: 'yash', password: 'Mypassword@12');
+      final authDetails =
+      AuthenticationDetails(username: 'yash', password: 'Mypassword@12');
 
-    final cognitoUser = new CognitoUser(
-        'yash', _userPool);
+      final cognitoUser = new CognitoUser(
+          'yash', _userPool);
 
-    CognitoUserSession _session;
-    try {
-      _session = await _cognitoUser.authenticateUser(authDetails);
-    } catch (e) {
-      print(e);
-    }
+      CognitoUserSession _session;
+      try {
+        _session = await _cognitoUser.authenticateUser(authDetails);
+      } catch (e) {
+        print(e);
+      }
 
-    final _identityPoolId = 'ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737';
+      final _identityPoolId = 'ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737';
 
-    final _credentials = CognitoCredentials(_identityPoolId, _userPool);
-    await _credentials.getAwsCredentials(_session.getIdToken().getJwtToken());
+      final _credentials = CognitoCredentials(_identityPoolId, _userPool);
+      await _credentials.getAwsCredentials(_session.getIdToken().getJwtToken());
 
-    final host = 's3.ap-south-1.amazonaws.com';
-    final region = 'ap-south-1';
-    final service = 's3';
-    final key =
-        'https://s3bucketclass.s3.ap-south-1.amazonaws.com/VID20190630131423mp4.mp4';
-    final payload = SigV4.hashCanonicalRequest('');
-    final datetime = SigV4.generateDatetime();
-    final canonicalRequest = '''GET
+      final host = 's3.ap-south-1.amazonaws.com';
+      final region = 'ap-south-1';
+      final service = 's3';
+      final key =
+          'https://s3bucketclass.s3.ap-south-1.amazonaws.com/VID20190630131423mp4.mp4';
+      final payload = SigV4.hashCanonicalRequest('');
+      final datetime = SigV4.generateDatetime();
+      final canonicalRequest = '''GET
       ${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
       host:$host
       x-amz-content-sha256:$payload
@@ -175,150 +132,131 @@ class HomePageState extends State<HomePage> {
       host;x-amz-content-sha256;x-amz-date;x-amz-security-token
       $payload''';
 
-    final credentialScope =
-        SigV4.buildCredentialScope(datetime, region, service);
-    final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
-        SigV4.hashCanonicalRequest(canonicalRequest));
-    final signingKey = SigV4.calculateSigningKey(
-        _credentials.secretAccessKey, datetime, region, service);
-    final signature = SigV4.calculateSignature(signingKey, stringToSign);
+      final credentialScope =
+      SigV4.buildCredentialScope(datetime, region, service);
+      final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
+          SigV4.hashCanonicalRequest(canonicalRequest));
+      final signingKey = SigV4.calculateSigningKey(
+          _credentials.secretAccessKey, datetime, region, service);
+      final signature = SigV4.calculateSignature(signingKey, stringToSign);
 
-    final authorization = [
-      'AWS4-HMAC-SHA256 Credential=${_credentials.accessKeyId}/$credentialScope',
-      'SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token',
-      'Signature=$signature',
-    ].join(',');
+      final authorization = [
+        'AWS4-HMAC-SHA256 Credential=${_credentials.accessKeyId}/$credentialScope',
+        'SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token',
+        'Signature=$signature',
+      ].join(',');
 
-    final uri = Uri.https(host, key);
-    http.Response response;
-    try {
-      response = await http.get(uri, headers: {
-        'Authorization': authorization,
-        'x-amz-content-sha256': payload,
-        'x-amz-date': datetime,
-        'x-amz-security-token': _credentials.sessionToken,
-      });
-    } catch (e) {
-      print(e);
+      final uri = Uri.https(host, key);
+      http.Response response;
+      try {
+        response = await http.get(uri, headers: {
+          'Authorization': authorization,
+          'x-amz-content-sha256': payload,
+          'x-amz-date': datetime,
+          'x-amz-security-token': _credentials.sessionToken,
+        });
+      } catch (e) {
+        print(e);
+      }
+
+      final file =
+      File(path.join('/storage/emulated/0/', 'a.mp4'));
+
+      try {
+        await file.writeAsBytes(response.bodyBytes);
+      } catch (e) {
+        print(e.toString());
+      }
+
+      print('complete!');
     }
 
-    final file =
-        File(path.join('/storage/emulated/0/', 'a.mp4'));
+    Future uploadS3Yash(String pathString) async {
 
-    try {
-      await file.writeAsBytes(response.bodyBytes);
-    } catch (e) {
-      print(e.toString());
-    }
+      const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
+      const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
+      var username = "yash.sodha@gmail.com";
+      var password = "Password@1234";
 
-    print('complete!');
-  }
+      final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
+      final cognitoUser = new CognitoUser(username, userPool);
+      final authDetails = new AuthenticationDetails(username: username, password: password);
 
-  Future uploadS3Yash(String pathString) async {
+      CognitoUserSession session;
+      try
+      {
+        session = await cognitoUser.authenticateUser(authDetails);
+      }
+      catch (e)
+      {
+        print(e);
+      }
 
-    const _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-    const _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
-    var username = "yash.sodha@gmail.com";
-    var password = "Password@1234";
+      print(session.getAccessToken().getJwtToken());
 
-    final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
-    final cognitoUser = new CognitoUser(username, userPool);
-    final authDetails = new AuthenticationDetails(username: username, password: password);
+      final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
 
-    CognitoUserSession session;
-    try
-    {
-      session = await cognitoUser.authenticateUser(authDetails);
-    }
-    catch (e)
-    {
-      print(e);
-    }
+      await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
 
-    print(session.getAccessToken().getJwtToken());
+      const _region = 'us-east-1';
+      const _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
 
-    final credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
+      final file = File(pathString);
+      String filename = basename(file.path);
 
-    await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
+      final stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
+      final length = await file.length();
+      print("File length" + length.toString());
+      final uri = Uri.parse(_s3Endpoint);
+      final req = http.MultipartRequest("POST", uri);
+      final multipartFile = http.MultipartFile('file', stream, length,
+          filename: path.basename(file.path));
 
-    const _region = 'us-east-1';
-    const _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
+      final policy = Policy.fromS3PresignedPost(
+          filename,
+          'yashrstest123',
+          15,
+          credentials.accessKeyId,
+          length,
+          credentials.sessionToken,
+          region: _region);
 
-    final file = File(pathString);
-    String filename = basename(file.path);
+      final key = SigV4.calculateSigningKey(credentials.secretAccessKey, policy.datetime, _region, 's3');
+      final signature = SigV4.calculateSignature(key, policy.encode());
 
-    final stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
-    final length = await file.length();
-    print("File length" + length.toString());
-    final uri = Uri.parse(_s3Endpoint);
-    final req = http.MultipartRequest("POST", uri);
-    final multipartFile = http.MultipartFile('file', stream, length,
-        filename: path.basename(file.path));
-
-    final policy = Policy.fromS3PresignedPost(
-        filename,
-        'yashrstest123',
-        15,
-        credentials.accessKeyId,
-        length,
-        credentials.sessionToken,
-        region: _region);
-
-    final key = SigV4.calculateSigningKey(credentials.secretAccessKey, policy.datetime, _region, 's3');
-    final signature = SigV4.calculateSignature(key, policy.encode());
-
-    req.files.add(multipartFile);
-    req.fields['key'] = policy.key;
-    req.fields['acl'] = 'private';
-    req.fields['X-Amz-Credential'] = policy.credential;
-    req.fields['X-Amz-Algorithm'] = 'AWS4-HMAC-SHA256';
-    req.fields['X-Amz-Date'] = policy.datetime;
-    req.fields['Policy'] = policy.encode();
-    req.fields['X-Amz-Signature'] = signature;
-    req.fields['x-amz-security-token'] = credentials.sessionToken;
+      req.files.add(multipartFile);
+      req.fields['key'] = policy.key;
+      req.fields['acl'] = 'private';
+      req.fields['X-Amz-Credential'] = policy.credential;
+      req.fields['X-Amz-Algorithm'] = 'AWS4-HMAC-SHA256';
+      req.fields['X-Amz-Date'] = policy.datetime;
+      req.fields['Policy'] = policy.encode();
+      req.fields['X-Amz-Signature'] = signature;
+      req.fields['x-amz-security-token'] = credentials.sessionToken;
 
       print(req);
       print(req.fields);
 
-    try {
-      final res = await req.send();
-      await for (var value in res.stream.transform(utf8.decoder)) {
-        print(value);
+      try {
+        final res = await req.send();
+        await for (var value in res.stream.transform(utf8.decoder)) {
+          print(value);
+        }
+      } catch (e) {
+        print(e.toString());
       }
-    } catch (e) {
-      print(e.toString());
+
     }
 
-  }
+    Future uploadToS3(String pathString) async {
+      String uploadedImageUrl = await FlutterAmazonS3.uploadImage(
+          pathString,
+          "s3bucketclass",
+          "ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737",
+          "ap-south-1");
 
-
-  Future uploadToS3(String pathString) async {
-    String uploadedImageUrl = await FlutterAmazonS3.uploadImage(
-        pathString,
-        "s3bucketclass",
-        "ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737",
-        "ap-south-1");
-
-    print(uploadedImageUrl);
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-//    imageSelectorGallery() async {
-//      galleryFile = await ImagePicker.pickImage(
-//        source: ImageSource.gallery,
-//        // maxHeight: 50.0,
-//        // maxWidth: 50.0,
-//      );
-//      print("You selected gallery image : " + galleryFile.path);
-//      //uploadToS3(galleryFile.path.toString());
-//
-//      setState(() {});
-//    }
-
-
-
+      print(uploadedImageUrl);
+    }
     fileSelector() async {
       Map<String, String> filesPaths;
       filesPaths = await FilePicker
@@ -339,7 +277,6 @@ class HomePageState extends State<HomePage> {
         uploadS3Yash(someFilePath);
 
       }
-      setState(() {});
     }
 
     return new Scaffold(
@@ -372,3 +309,5 @@ class HomePageState extends State<HomePage> {
     );
   }
 }
+
+
