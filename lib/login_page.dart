@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
-import './main.dart';
+import './home_page.dart';
 
+
+class passData
+{
+  String username;
+  String password;
+}
 
 class LoginPage extends StatefulWidget {
 
@@ -10,7 +16,17 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final emailController = TextEditingController(text: "yash.sodha@gmail.com");
+  final passController = TextEditingController(text: "Password@1234");
 
+
+  @override
+  void dispose() {
+    // Clean up the controller when the widget is disposed.
+    emailController.dispose();
+    passController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,20 +40,22 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     final email = TextFormField(
-      keyboardType: TextInputType.emailAddress,
+      controller: emailController,
       autofocus: false,
       decoration: InputDecoration(
-        hintText: 'Email',
+        hintText: 'User Name',
         contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
       ),
     );
 
     final password = TextFormField(
+      controller: passController,
       autofocus: false,
       obscureText: true,
       decoration: InputDecoration(
         hintText: 'Password',
+
         contentPadding: EdgeInsets.fromLTRB(20.0, 10.0, 20.0, 10.0),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(32.0)),
       ),
@@ -50,13 +68,14 @@ class _LoginPageState extends State<LoginPage> {
           borderRadius: BorderRadius.circular(24),
         ),
         onPressed: () {
-          Navigator.of(context).pushNamed(HomePage.tag);
-//          Navigator.push(
-//            context,
-//            MaterialPageRoute(
-//              builder: (context) => HomePage(todos),
-//            ),
-//          );
+//          print(emailController.text.toString()+ "PW: "+ passController.text.toString());
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(username: emailController.text.toString(), password: passController.text.toString()),
+            ),
+          );
 
         },
         padding: EdgeInsets.all(12),
