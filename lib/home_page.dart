@@ -11,9 +11,18 @@ import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:path/path.dart';
 import 'package:xml/xml.dart' as xml;
 
+
+
 import './policy.dart';
 
 class HomePage extends StatelessWidget {
+
+  Future<List> future;
+
+  @override
+  void initState() {
+    future = getFileNames();
+  }
   static String tag = 'home-page';
 
   List data;
@@ -21,47 +30,51 @@ class HomePage extends StatelessWidget {
 
   final _awsUserPoolId = 'us-east-1_jNiKQfHo5';
   final _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
-  final username = "yash.sodha@gmail.com";
-  final password = "Password@1234";
+//  get username => pd.username;// "yash.sodha@gmail.com";
+//  get password => pd.password;//"Password@1234";
   final _region = 'us-east-1';
   final bucketname = 'yashrstest123';
   final _host = 'yashrstest123.s3.amazonaws.com';
   final _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
 
-  Future<CognitoCredentials> getCredentials() async{
+  final username, password;
+
+
+  HomePage({Key key, @required this.username, @required this.password}) : super(key: key);
+
+  Future<CognitoCredentials> getCredentials() async {
     final userPool = new CognitoUserPool(_awsUserPoolId, _awsClientId);
     final cognitoUser = new CognitoUser(username, userPool);
-    final authDetails = new AuthenticationDetails(username: username, password: password);
+    final authDetails =
+        new AuthenticationDetails(username: username, password: password);
     CognitoUserSession session;
-    try
-    {
+    try {
       session = await cognitoUser.authenticateUser(authDetails);
-    }
-    catch (e)
-    {
+    } catch (e) {
       print(e);
     }
 
     print(session.getAccessToken().getJwtToken());
 
-    var credentials = new CognitoCredentials('us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
+    var credentials = new CognitoCredentials(
+        'us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
     await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
 
     return credentials;
-
   }
 
   Future cognitologintest() async {
     var credentials = await getCredentials();
-    print("Access key id: "+ credentials.accessKeyId);
-    print("Secret Access Key: "+ credentials.secretAccessKey);
-    print("Session Token: "+ credentials.sessionToken);
+    print("Access key id: " + credentials.accessKeyId);
+    print("Secret Access Key: " + credentials.secretAccessKey);
+    print("Session Token: " + credentials.sessionToken);
   }
-  Future<http.Response> getFileHelper(String S3Key) async{
+
+  Future<http.Response> getFileHelper(String S3Key) async {
     var credentials = await getCredentials();
 
     final host = 's3.amazonaws.com';
-    final region =  _region;
+    final region = _region;
     final service = 's3';
     final key = bucketname + '/' + S3Key;
 
@@ -78,7 +91,7 @@ x-amz-security-token:${credentials.sessionToken}
 host;x-amz-content-sha256;x-amz-date;x-amz-security-token
 $payload''';
     final credentialScope =
-    SigV4.buildCredentialScope(datetime, region, service);
+        SigV4.buildCredentialScope(datetime, region, service);
     final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
         SigV4.hashCanonicalRequest(canonicalRequest));
     final signingKey = SigV4.calculateSigningKey(
@@ -100,7 +113,6 @@ $payload''';
         'x-amz-date': datetime,
         'x-amz-security-token': credentials.sessionToken,
       });
-
     } catch (e) {
       print(e);
     }
@@ -119,7 +131,7 @@ $payload''';
 
     List fileList = new List<String>();
 
-    for(int i=0; i< files.length; i++){
+    for (int i = 0; i < files.length; i++) {
       var file = files.elementAt(i);
       print(file.text);
       fileList.add(file.text);
@@ -135,7 +147,6 @@ $payload''';
   }
 
   Future uploadFileToS3(String pathString) async {
-
     var credentials = await getCredentials();
 
     final file = File(pathString);
@@ -149,16 +160,12 @@ $payload''';
     final multipartFile = http.MultipartFile('file', stream, length,
         filename: path.basename(file.path));
 
-    final policy = Policy.fromS3PresignedPost(
-        filename,
-        'yashrstest123',
-        15,
-        credentials.accessKeyId,
-        length,
-        credentials.sessionToken,
+    final policy = Policy.fromS3PresignedPost(filename, 'yashrstest123', 15,
+        credentials.accessKeyId, length, credentials.sessionToken,
         region: _region);
 
-    final key = SigV4.calculateSigningKey(credentials.secretAccessKey, policy.datetime, _region, 's3');
+    final key = SigV4.calculateSigningKey(
+        credentials.secretAccessKey, policy.datetime, _region, 's3');
     final signature = SigV4.calculateSignature(key, policy.encode());
 
     req.files.add(multipartFile);
@@ -180,11 +187,8 @@ $payload''';
       print("Request sent");
       await for (var value in res.stream.transform(utf8.decoder)) {
         print(value);
-
       }
-    }
-    catch (e)
-    {
+    } catch (e) {
       print("Exception: ");
       print(e);
     }
@@ -202,17 +206,6 @@ $payload''';
 
   @override
   Widget build(BuildContext context) {
-//    imageSelectorGallery() async {
-//      galleryFile = await ImagePicker.pickImage(
-//        source: ImageSource.gallery,
-//        // maxHeight: 50.0,
-//        // maxWidth: 50.0,
-//      );
-//      print("You selected gallery image : " + galleryFile.path);
-//      //uploadToS3(galleryFile.path.toString());
-//
-//      setState(() {});
-//    }
 
     fileSelector() async {
       Map<String, String> filesPaths;
@@ -229,37 +222,55 @@ $payload''';
         uploadFileToS3(path);
       }
     }
+    List data = [1, 2,23,4];
 
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Share and Care'),
       ),
-      body: new Builder(
-        builder: (BuildContext context) {
-          return new Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+//      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
+      body:
+          new Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.max,
             children: <Widget>[
-              new RaisedButton(
-                child: new Text('Select file'),
-                onPressed: fileSelector,
-              ),
-              new RaisedButton(
-                child: new Text('Get Sample file'),
-                onPressed: getFile,
-              ),
-              new RaisedButton(
-                child: new Text('Cognito Login Test'),
-                onPressed: cognitologintest,
-              ),
-              new RaisedButton(
-                child: new Text('GetFileList'),
-                onPressed: getFileNames,
-              ),
-            ],
-          );
-        },
-      ),
+          new FutureBuilder<List>(
+            future: getFileNames(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) return Container();
+              List<String> posts = snapshot.data;
+              return new Flexible(child: new ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (BuildContext ctxt, int index) {
+                    return new Text(posts[index]);
+                  }
+              ),);
+
+            },
+          ),
+          
+          new RaisedButton(
+            child: new Text('Get Sample file'),
+            onPressed: getFile,
+          ),
+//              new RaisedButton(
+//                child: new Text('Cognito Login Test'),
+//                onPressed: cognitologintest,
+//              ),
+//          new RaisedButton(
+//            child: new Text('GetFileList'),
+//            onPressed: getFileNames,
+//          ),
+          new FloatingActionButton.extended(
+            elevation: 20.0,
+            icon: Icon(Icons.add),
+            label: Text("Add Files"),
+            onPressed: fileSelector,
+          ),
+        ],
+      )
+
     );
   }
 }

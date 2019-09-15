@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
           borderRadius: BorderRadius.circular(24),
         ),
         onPressed: () {
-          print(emailController.text.toString()+ "PW: "+ passController.text.toString());
+//          print(emailController.text.toString()+ "PW: "+ passController.text.toString());
 
           Navigator.push(
             context,
