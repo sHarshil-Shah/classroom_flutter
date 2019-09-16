@@ -75,15 +75,15 @@ class HomePage extends StatelessWidget {
     final payload = SigV4.hashCanonicalRequest('');
     final datetime = SigV4.generateDatetime();
     final canonicalRequest = '''GET
-    ${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
-    
-    host:$host
-    x-amz-content-sha256:$payload
-    x-amz-date:$datetime
-    x-amz-security-token:${credentials.sessionToken}
-    
-    host;x-amz-content-sha256;x-amz-date;x-amz-security-token
-    $payload''';
+${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
+
+host:$host
+x-amz-content-sha256:$payload
+x-amz-date:$datetime
+x-amz-security-token:${credentials.sessionToken}
+
+host;x-amz-content-sha256;x-amz-date;x-amz-security-token
+$payload''';
     final credentialScope =
     SigV4.buildCredentialScope(datetime, region, service);
     final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
