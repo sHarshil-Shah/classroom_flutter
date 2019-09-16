@@ -183,13 +183,13 @@ $payload''';
     return fileList;
   }
 
-  Future getFile() async {
-    http.Response aa = await getFileHelper("yash");
+  Future getFile(String fileName) async {
+    http.Response aa = await getFileHelper(fileName);
     print(aa.body);
   }
 
-  Future delFileDemo() async {
-    http.Response aa = await deleteFileHelper("yash");
+  Future delFileDemo(String fileName) async {
+    http.Response aa = await deleteFileHelper(fileName);
     print(aa.body);
   }
 
@@ -274,6 +274,14 @@ $payload''';
     return new Scaffold(
       appBar: new AppBar(
         title: new Text('Share and Care'),
+          actions: <Widget>[
+      // action button
+      IconButton(
+      icon: Icon(Icons.refresh),
+      onPressed: () {
+       getFileNames();
+      },
+    ),]
       ),
 //      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       body:
@@ -295,23 +303,14 @@ $payload''';
                         trailing:Row(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              IconButton(icon: Icon(Icons.cloud_download), onPressed: () {}),
-                              IconButton(icon: Icon(Icons.delete_forever), onPressed: () {})
+                              IconButton(icon: Icon(Icons.cloud_download), onPressed: () {getFile(posts[index]);}),
+                              IconButton(icon: Icon(Icons.delete_forever), onPressed: () {delFileDemo(posts[index]);})
                             ]),
                     );
                   }
               ),);
 
             },
-          ),
-
-          new RaisedButton(
-            child: new Text('Get file demo'),
-            onPressed: getFile,
-          ),
-          new RaisedButton(
-            child: new Text('Delete file demo'),
-            onPressed: delFileDemo,
           ),
 //              new RaisedButton(
 //                child: new Text('Cognito Login Test'),
