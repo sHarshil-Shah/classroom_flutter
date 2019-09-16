@@ -85,7 +85,7 @@ class HomePage extends StatelessWidget {
     host;x-amz-content-sha256;x-amz-date;x-amz-security-token
     $payload''';
     final credentialScope =
-        SigV4.buildCredentialScope(datetime, region, service);
+    SigV4.buildCredentialScope(datetime, region, service);
     final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
         SigV4.hashCanonicalRequest(canonicalRequest));
     final signingKey = SigV4.calculateSigningKey(
@@ -102,6 +102,54 @@ class HomePage extends StatelessWidget {
     http.Response response;
     try {
       response = await http.get(uri, headers: {
+        'Authorization': authorization,
+        'x-amz-content-sha256': payload,
+        'x-amz-date': datetime,
+        'x-amz-security-token': credentials.sessionToken,
+      });
+    } catch (e) {
+      print(e);
+    }
+    return response;
+  }
+  Future<http.Response> deleteFileHelper(String S3Key) async {
+    var credentials = await getCredentials();
+
+    final host = 's3.amazonaws.com';
+    final region = _region;
+    final service = 's3';
+    final key = bucketname + '/' + S3Key;
+
+    final payload = SigV4.hashCanonicalRequest('');
+    final datetime = SigV4.generateDatetime();
+    final canonicalRequest = '''DELETE
+${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
+
+host:$host
+x-amz-content-sha256:$payload
+x-amz-date:$datetime
+x-amz-security-token:${credentials.sessionToken}
+
+host;x-amz-content-sha256;x-amz-date;x-amz-security-token
+$payload''';
+    final credentialScope =
+    SigV4.buildCredentialScope(datetime, region, service);
+    final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
+        SigV4.hashCanonicalRequest(canonicalRequest));
+    final signingKey = SigV4.calculateSigningKey(
+        credentials.secretAccessKey, datetime, region, service);
+    final signature = SigV4.calculateSignature(signingKey, stringToSign);
+
+    final authorization = [
+      'AWS4-HMAC-SHA256 Credential=${credentials.accessKeyId}/$credentialScope',
+      'SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token',
+      'Signature=$signature',
+    ].join(',');
+
+    final uri = Uri.https(host, key);
+    http.Response response;
+    try {
+      response = await http.delete(uri, headers: {
         'Authorization': authorization,
         'x-amz-content-sha256': payload,
         'x-amz-date': datetime,
@@ -137,6 +185,11 @@ class HomePage extends StatelessWidget {
 
   Future getFile() async {
     http.Response aa = await getFileHelper("yash");
+    print(aa.body);
+  }
+
+  Future delFileDemo() async {
+    http.Response aa = await deleteFileHelper("yash");
     print(aa.body);
   }
 
@@ -251,10 +304,14 @@ class HomePage extends StatelessWidget {
 
             },
           ),
-          
+
           new RaisedButton(
-            child: new Text('Get Sample file'),
+            child: new Text('Get file demo'),
             onPressed: getFile,
+          ),
+          new RaisedButton(
+            child: new Text('Delete file demo'),
+            onPressed: delFileDemo,
           ),
 //              new RaisedButton(
 //                child: new Text('Cognito Login Test'),
@@ -269,7 +326,11 @@ class HomePage extends StatelessWidget {
             icon: Icon(Icons.add),
             label: Text("Add Files"),
             onPressed: fileSelector,
+
           ),
+
+
+
         ],
       )
 
