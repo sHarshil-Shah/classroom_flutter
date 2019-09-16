@@ -16,13 +16,7 @@ import 'package:xml/xml.dart' as xml;
 import './policy.dart';
 
 class HomePage extends StatelessWidget {
-
-  Future<List> future;
-
-  @override
-  void initState() {
-    future = getFileNames();
-  }
+  
   static String tag = 'home-page';
 
   List data;
@@ -81,15 +75,15 @@ class HomePage extends StatelessWidget {
     final payload = SigV4.hashCanonicalRequest('');
     final datetime = SigV4.generateDatetime();
     final canonicalRequest = '''GET
-${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
-
-host:$host
-x-amz-content-sha256:$payload
-x-amz-date:$datetime
-x-amz-security-token:${credentials.sessionToken}
-
-host;x-amz-content-sha256;x-amz-date;x-amz-security-token
-$payload''';
+    ${'/$key'.split('/').map((s) => Uri.encodeComponent(s)).join('/')}
+    
+    host:$host
+    x-amz-content-sha256:$payload
+    x-amz-date:$datetime
+    x-amz-security-token:${credentials.sessionToken}
+    
+    host;x-amz-content-sha256;x-amz-date;x-amz-security-token
+    $payload''';
     final credentialScope =
         SigV4.buildCredentialScope(datetime, region, service);
     final stringToSign = SigV4.buildStringToSign(datetime, credentialScope,
@@ -243,7 +237,15 @@ $payload''';
               return new Flexible(child: new ListView.builder(
                   itemCount: posts.length,
                   itemBuilder: (BuildContext ctxt, int index) {
-                    return new Text(posts[index]);
+                    return new ListTile(
+                        title: Text(posts[index]),
+                        trailing:Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              IconButton(icon: Icon(Icons.cloud_download), onPressed: () {}),
+                              IconButton(icon: Icon(Icons.delete_forever), onPressed: () {})
+                            ]),
+                    );
                   }
               ),);
 
