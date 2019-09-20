@@ -183,7 +183,7 @@ $payload''';
 
   Future getFile(String fileName) async {
     http.Response aa = await getFileHelper(fileName);
-    var folderName = '/sdcard/flutterapp/';
+    var folderName = '/sdcard/classroom(Prototype)/';
     new File(folderName+"sample").createSync(recursive: true);
 
     final file = File(path.join(folderName, fileName));
