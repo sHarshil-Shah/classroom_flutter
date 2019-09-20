@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:amazon_cognito_identity_dart/cognito.dart';
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:xml/xml.dart' as xml;
+import 'package:path/path.dart' as path;
 
 class MyListView extends StatefulWidget {
   MyListView({Key key, @required this.username, @required this.password})
@@ -180,11 +183,24 @@ $payload''';
 
   Future getFile(String fileName) async {
     http.Response aa = await getFileHelper(fileName);
-    print(aa.body);
+    var folderName = '/sdcard/flutterapp/';
+    new File(folderName+"sample").createSync(recursive: true);
+
+    final file = File(path.join(folderName, fileName));
+
+    try {
+      await file.writeAsBytes(aa.bodyBytes);
+    } catch (e) {
+      print(e.toString());
+      return;
+    }
+    print("Downloaded file: " + fileName);
+    print('complete!');
   }
 
   Future delFileDemo(String fileName) async {
     http.Response aa = await deleteFileHelper(fileName);
+    print("Deleted file: " + fileName);
     print(aa.body);
   }
 
