@@ -202,11 +202,10 @@ $payload''';
     http.Response aa = await deleteFileHelper(fileName);
     print("Deleted file: " + fileName);
     print(aa.body);
+    setState(() {
+
+    });
   }
-
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      new GlobalKey<RefreshIndicatorState>();
-
   @override
   Widget build(BuildContext context) {
     return new FutureBuilder<List>(
