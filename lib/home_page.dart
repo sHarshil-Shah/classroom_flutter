@@ -25,7 +25,6 @@ class HomePage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     return _HomePageState(username, password);
-    return null;
   }
 
 
@@ -143,6 +142,11 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  signOut()
+  {
+    
+  }
+
   @override
   Widget build(BuildContext context) {
     fileSelector() async {
@@ -160,8 +164,35 @@ class _HomePageState extends State<HomePage> {
         uploadFileToS3(path);
       }
     }
+    final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
     return new Scaffold(
+        key: _scaffoldKey,
+        drawer: Drawer(
+          child: ListView(
+            children: <Widget>[
+              UserAccountsDrawerHeader(
+                accountName: Text(username),
+                currentAccountPicture: CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Text(
+                    '${username[0].toString().toUpperCase()}',
+                    style: TextStyle(fontSize: 40.0),
+                  ),
+                ),
+              ),
+              ListTile(
+                title: Text("Log out"),
+                trailing: Icon(Icons.exit_to_app),
+                onTap: signOut(),
+              ),
+//              ListTile(
+//                title: Text("Item 2"),
+//                trailing: Icon(Icons.arrow_forward),
+//              ),
+            ],
+          ),
+        ),
         appBar: new AppBar(
           title: new Text('Share and Care'),
           actions: <Widget>[
@@ -169,7 +200,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(Icons.refresh),
               onPressed: () {
                 setState(() {
-                  
+
                 });
               },
             ),
@@ -210,6 +241,8 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+
 
 class MyListView extends StatefulWidget {
   MyListView({Key key, @required this.username, @required this.password})
