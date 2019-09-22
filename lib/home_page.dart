@@ -1,4 +1,3 @@
-import 'package:classroom_flutter/MyListView.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -10,15 +9,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:amazon_cognito_identity_dart/cognito.dart';
 import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:path/path.dart';
-import 'dart:io';
-
-import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:http/http.dart' as http;
-import 'package:amazon_cognito_identity_dart/cognito.dart';
-import 'package:amazon_cognito_identity_dart/sig_v4.dart';
 import 'package:xml/xml.dart' as xml;
-import 'package:path/path.dart' as path;
+
 import './policy.dart';
 
 class HomePage extends StatefulWidget {
@@ -141,6 +133,9 @@ class _HomePageState extends State<HomePage> {
       print("Request sent");
       await for (var value in res.stream.transform(utf8.decoder)) {
         print(value);
+        setState(() {
+
+        });
       }
     } catch (e) {
       print("Exception: ");
@@ -169,6 +164,16 @@ class _HomePageState extends State<HomePage> {
     return new Scaffold(
         appBar: new AppBar(
           title: new Text('Share and Care'),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                setState(() {
+                  
+                });
+              },
+            ),
+          ],
         ),
 //      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
         body:
