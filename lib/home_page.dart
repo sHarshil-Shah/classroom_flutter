@@ -31,9 +31,9 @@ class HomePage extends StatefulWidget {
 //  Future uploadToS3(String pathString) async {
 //    String uploadedImageUrl = await FlutterAmazonS3.uploadImage(
 //        pathString,
-//        "s3bucketclass",
-//        "ap-south-1:b97756ef-5592-45f7-ad80-1e651d945737",
-//        "ap-south-1");
+//        "s3bucket",
+//        "ap-XXXXX-X:xxxxxxxxxxxxxxxxxxxxx",
+//        "ap-XX-X");
 //
 //    print(uploadedImageUrl);
 //  }
@@ -51,15 +51,15 @@ class _HomePageState extends State<HomePage> {
   List data;
   File galleryFile;
 
-  final _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-  final _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
+  final _awsUserPoolId = 'xxxxxx';
+  final _awsClientId = 'xxxxxxxx';
 
 //  get username => pd.username;// "yash.sodha@gmail.com";
 //  get password => pd.password;//"Password@1234";
-  final _region = 'us-east-1';
-  final bucketname = 'yashrstest123';
-  final _host = 'yashrstest123.s3.amazonaws.com';
-  final _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
+  final _region = 'xxxxxxxxxx';
+  final bucketname = 'xxxxxx';
+  final _host = 'xxxxxxx';
+  final _s3Endpoint = 'xxxxxxxx';
 
 
   Future<CognitoCredentials> getCredentials() async {
@@ -77,7 +77,7 @@ class _HomePageState extends State<HomePage> {
     print(session.getAccessToken().getJwtToken());
 
     var credentials = new CognitoCredentials(
-        'us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
+        'xxxxxxxxxxxx', userPool);
     await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
 
     return credentials;
@@ -257,14 +257,14 @@ class MyListView extends StatefulWidget {
 }
 
 class _MyListViewState extends State<MyListView> {
-  final _awsUserPoolId = 'us-east-1_jNiKQfHo5';
-  final _awsClientId = '74b6go2gpt8l0jsikrvbsr3f8a';
+  final _awsUserPoolId = 'xxxxxxx';
+  final _awsClientId = 'xxxxxxxxxx';
 //  get username => pd.username;// "yash.sodha@gmail.com";
 //  get password => pd.password;//"Password@1234";
-  final _region = 'us-east-1';
-  final bucketname = 'yashrstest123';
-  final _host = 'yashrstest123.s3.amazonaws.com';
-  final _s3Endpoint = 'https://yashrstest123.s3.amazonaws.com';
+  final _region = 'xxxxxxxx';
+  final bucketname = 'xxxxxxxx';
+  final _host = 'xxxxxxxxx';
+  final _s3Endpoint = 'xxxxxxxxxx';
   final username, password;
 
   _MyListViewState(this.username, this.password);
@@ -284,7 +284,7 @@ class _MyListViewState extends State<MyListView> {
     print(session.getAccessToken().getJwtToken());
 
     var credentials = new CognitoCredentials(
-        'us-east-1:b8e2039c-6e28-46bf-b812-1aa3d423e4d9', userPool);
+        'xxxxxxxxxxx', userPool);
     await credentials.getAwsCredentials(session.getIdToken().getJwtToken());
 
     return credentials;
